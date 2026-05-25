@@ -15,7 +15,8 @@ async function loadPdfJs(): Promise<any> {
   isLoading = true;
   // @ts-expect-error - pdfjs-dist/build/pdf.mjs is not a module
   loadPromise = import("pdfjs-dist/build/pdf.mjs").then((lib) => {
-    // Set the worker source to use local file
+    // Prefer a local worker served from `public/pdf.worker.min.mjs`.
+    // A postinstall script copies the matching worker into `public/` from node_modules.
     lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
     pdfjsLib = lib;
     isLoading = false;
@@ -39,15 +40,22 @@ export async function convertPdfToImage(
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
 
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
 
-    if (context) {
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
+    if (!context) {
+      return {
+        imageUrl: "",
+        file: null,
+        error: "Failed to get 2D canvas context",
+      };
     }
 
-    await page.render({ canvasContext: context!, viewport }).promise;
+    context.imageSmoothingEnabled = true;
+    // @ts-ignore
+    context.imageSmoothingQuality = "high";
+
+    await page.render({ canvasContext: context, viewport }).promise;
 
     return new Promise((resolve) => {
       canvas.toBlob(
@@ -76,10 +84,13 @@ export async function convertPdfToImage(
       ); // Set quality to maximum (1.0)
     });
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // eslint-disable-next-line no-console
+    console.error("convertPdfToImage error:", err);
     return {
       imageUrl: "",
       file: null,
-      error: `Failed to convert PDF: ${err}`,
+      error: `Failed to convert PDF: ${message}`,
     };
   }
 }

@@ -1,11 +1,11 @@
-import React, { useState, type FormEvent } from 'react'
-import Navbar from '~/component/Navbar'
-import FileUploader from '~/component/FileUploader';
-import { usePuterStore } from '~/lib/puter';
-import { useNavigate } from 'react-router';
-import { convertPdfToImage } from '~/lib/pdf2img';
-import { generateUUID } from '~/lib/utils';
-import { prepareInstructions } from '~/constants';
+import { type FormEvent, useState } from 'react'
+import Navbar from "~/components/Navbar";
+import FileUploader from "~/components/FileUploader";
+import { usePuterStore } from "~/lib/puter";
+import { useNavigate } from "react-router";
+import { convertPdfToImage } from "~/lib/pdf2img";
+import { generateUUID } from "~/lib/utils";
+import { prepareInstructions } from "../../constants";
 
 const Upload = () => {
     const { auth, isLoading, fs, ai, kv } = usePuterStore();
@@ -56,7 +56,13 @@ const Upload = () => {
             ? feedback.message.content
             : feedback.message.content[0].text;
 
-        data.feedback = JSON.parse(feedbackText);
+        // Strip markdown code block markers if present (```json ... ```)
+        const cleanedFeedbackText = feedbackText
+            .replace(/^```(?:json)?\s*/i, '')
+            .replace(/\s*```$/i, '')
+            .trim();
+
+        data.feedback = JSON.parse(cleanedFeedbackText);
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
         setStatusText('Analysis complete, redirecting...');
         console.log(data);
@@ -88,7 +94,7 @@ const Upload = () => {
                     {isProcessing ? (
                         <>
                             <h2>{statusText}</h2>
-                            <img src="/images/resume-scan.gif" className="w-full" />
+                            <img src="/images/resume-scan.gif" className="w-full" alt="Resume scanning animation" />
                         </>
                     ) : (
                         <h2>Drop your resume for an ATS score and improvement tips</h2>

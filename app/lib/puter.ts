@@ -350,7 +350,7 @@ export const usePuterStore = create<PuterStore>((set, get) => {
           ],
         },
       ],
-      { model: "claude-sonnet-4" },
+      { model: "claude-sonnet-4.5" },
     ) as Promise<AIResponse | undefined>;
   };
 
@@ -454,3 +454,9 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     clearError: () => set({ error: null }),
   };
 });
+
+// list of models: gpt-5.4-nano
+// claude-sonnet-4.5
+// o3-mini
+//   gemini-2.5-flash, Gemini-2.5-Pro
+//   grok-4-fast
